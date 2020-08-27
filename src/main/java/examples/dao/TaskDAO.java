@@ -48,9 +48,9 @@ public class TaskDAO implements AutoCloseable {
         if (resultSet.next()) {
             long taskId = resultSet.getLong("id");
             String description = resultSet.getString("description");
-            long user_id = resultSet.getLong("user_id");
+            long userId = resultSet.getLong("user_id");
             preparedStatement.close();
-            return Optional.of(new Task(taskId, description, user_id));
+            return Optional.of(new Task(taskId, description, userId));
         }
         preparedStatement.close();
         return Optional.empty();
@@ -76,9 +76,9 @@ public class TaskDAO implements AutoCloseable {
     public void update(Task task) throws SQLException {
         // aktualizujemy description i user_id na podstawie id taska
         PreparedStatement preparedStatement = connection.prepareStatement("UPDATE task SET description=?, user_id=? WHERE id=?");
-        preparedStatement.setLong(1, task.getId());
-        preparedStatement.setString(2, task.getDescription());
-        preparedStatement.setLong(3, task.getUserId());
+        preparedStatement.setString(1, task.getDescription());
+        preparedStatement.setLong(2, task.getUserId());
+        preparedStatement.setLong(3, task.getId());
         preparedStatement.executeUpdate();
         preparedStatement.close();
 
@@ -95,7 +95,19 @@ public class TaskDAO implements AutoCloseable {
     public List<Task> readAllForUser(String username) throws SQLException {
         // dla ochotników
         // konstruujemy query z użyciem JOIN i odwołaniem do tabeli user
-        return Collections.emptyList();
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM task JOIN user ON user.id=task.user_id WHERE user.username=?");
+        preparedStatement.setString(1, username);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        List<Task> tasks = new ArrayList<>();
+        while (resultSet.next()) {
+            long taskId = resultSet.getLong("id");
+            String description = resultSet.getString("description");
+            long userId = resultSet.getLong("user_id");
+            tasks.add(new Task(taskId, description, userId));
+        }
+
+        preparedStatement.close();
+        return tasks;
     }
 
     @Override
